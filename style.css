@@ -1,0 +1,54 @@
+*{
+font-family: Arial, sans-serif;
+}
+
+.filter {
+width: 48%;
+margin: 10px auto 0px;
+}
+
+#filterCategory, .filterVip {
+width: 50%;
+float: left;
+}
+
+#calendar2 {
+width: 85%;
+min-height: 520px;
+font-size: 14px;
+text-align: center;
+margin: 15px auto 0px;
+border-collapse: collapse;
+}
+
+#calendar2 thead tr:last-child {
+font-size: small;
+color: rgb(85, 85, 85);
+}
+
+#calendar2 thead tr:nth-child(1) td:nth-child(2) {
+color: rgb(50, 50, 50);
+}
+
+#calendar2 thead tr:nth-child(1) td:nth-child(1):hover, #calendar2 thead tr:nth-child(1) td:nth-child(3):hover {
+cursor: pointer;
+}
+
+#calendar2 tbody td {
+width: 14.2857%;
+color: rgb(44, 86, 122);
+}
+
+#calendar2 tbody td.today {
+background: aquamarine;
+color: #fff;
+}
+
+tbody td {
+border: 1px solid lightgrey;
+}
+
+#calendar2 tbody td:hover {
+background: lightgreen;
+color: #fff;
+}

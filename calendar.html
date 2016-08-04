@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Календарь</title>
+    <script src="lodash.js"></script>
+    <script src="jquery-3.1.0.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div class="filter">
+      <div id="filterCategory">
+        <p><select id="mySelectCategory" size="1"  onchange="StatusSelect()">
+          <option value="Выбрать категорию">Выбрать категорию</option>
+          <option value="Все">Все</option>
+          </select></p>
+      </div>
+      <div class="filterVip">
+        <p><select id="mySelectVip" size="1"  onChange="StatusSelect()">
+          <option value="Выбрать VIP">Выбрать VIP</option>
+          <option value="Все">Все</option>
+          <option value="true">VIP</option>
+          <option value="false">Не VIP</option>
+          </select></p>
+      </div>
+    </div>
+    <table id="calendar2">
+      <thead>
+        <tr><td>‹<td colspan="5"><td>›
+          <tr><td>Пн<td>Вт<td>Ср<td>Чт<td>Пт<td>Сб<td>Вс
+      </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+
+        <script>
+          function Calendar2(id, year, month) {
+            var Dlast = new Date(year,month+1,0).getDate(),
+                D = new Date(year,month,Dlast),
+                DNlast = new Date(D.getFullYear(),D.getMonth(),Dlast).getDay(),
+                DNfirst = new Date(D.getFullYear(),D.getMonth(),1).getDay(),
+                calendar = '<tr>',
+                month=["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+
+            if (DNfirst != 0) {
+              for(var  i = 1; i < DNfirst; i++) calendar += '<td>';
+            }else{
+              for(var  i = 0; i < 6; i++) calendar += '<td>';
+            }
+
+            for(var  i = 1; i <= Dlast; i++) {
+              if (i == new Date().getDate() && D.getFullYear() == new Date().getFullYear() && D.getMonth() == new Date().getMonth()) {
+                if((D.getMonth()+1)<10){
+                  if(i<10){calendar += '<td class="today" id="td'+D.getFullYear()+"-"+"0"+(D.getMonth()+1)+"-"+"0"+i+'">' +i}else{
+                    calendar += '<td class="today" id="td'+D.getFullYear()+"-"+"0"+(D.getMonth()+1)+"-"+i+'">' +i};}else{
+                      if(i<10){calendar += '<td class="today" id="td'+D.getFullYear()+"-"+(D.getMonth()+1)+"-"+"0"+i+'">' +i}else{
+                        calendar += '<td class="today" id="td'+D.getFullYear()+"-"+(D.getMonth()+1)+"-"+i+'">' +i};   
+                    }
+              }else{
+                if((D.getMonth()+1)<10){
+                  if(i<10){calendar += '<td id="td'+D.getFullYear()+"-"+"0"+(D.getMonth()+1)+"-"+"0"+i+'">' +i}else
+                  {calendar += '<td id="td'+D.getFullYear()+"-"+"0"+(D.getMonth()+1)+"-"+i+'">' +i};}else{
+                    if(i<10){calendar += '<td id="td'+D.getFullYear()+"-"+(D.getMonth()+1)+"-"+"0"+i+'">' +i}else
+                    {calendar += '<td id="td'+D.getFullYear()+"-"+(D.getMonth()+1)+"-"+i+'">' +i}; 
+                  };
+              }
+              if (new Date(D.getFullYear(),D.getMonth(),i).getDay() == 0) {
+                calendar += '<tr>';
+              }
+            }
+
+            for(var  i = DNlast; i < 7; i++) {calendar += '<td>&nbsp;'};
+            document.querySelector('#'+id+' tbody').innerHTML = calendar;
+            document.querySelector('#'+id+' thead td:nth-child(2)').innerHTML = month[D.getMonth()] +' '+ D.getFullYear();
+            document.querySelector('#'+id+' thead td:nth-child(2)').dataset.month = D.getMonth();
+            document.querySelector('#'+id+' thead td:nth-child(2)').dataset.year = D.getFullYear();
+            if (document.querySelectorAll('#'+id+' tbody tr').length < 6) {  
+              document.querySelector('#'+id+' tbody').innerHTML += '<tr><td>&nbsp;<td>&nbsp;<td>&nbsp;<td>&nbsp;<td>&nbsp;<td>&nbsp;<td>&nbsp;';
+            }
+          }
+
+          Calendar2("calendar2", new Date().getFullYear(), new Date().getMonth());
+
+          document.querySelector('#calendar2 thead tr:nth-child(1) td:nth-child(1)').onclick = function() {
+            Calendar2("calendar2", document.querySelector('#calendar2 thead td:nth-child(2)').dataset.year, parseFloat(document.querySelector('#calendar2 thead td:nth-child(2)').dataset.month)-1);
+            Load();
+          }
+
+          document.querySelector('#calendar2 thead tr:nth-child(1) td:nth-child(3)').onclick = function() {
+            Calendar2("calendar2", document.querySelector('#calendar2 thead td:nth-child(2)').dataset.year, parseFloat(document.querySelector('#calendar2 thead td:nth-child(2)').dataset.month)+1);
+            Load();
+          }
+
+
+          function Load(){
+            var arrCategory = [];
+            var chekedDate;
+            var arrChekedDate = [];
+            var arrUniqCategory = [];
+            var chekedCategory;
+            var chekedVIP;
+            var arrChekedCategory = [];
+
+            $.getJSON('https://raw.githubusercontent.com/SvitlanaKozina/calendar/master/data.json',
+                      function (data) {   
+              arrUniqCategory = _.uniq(_.map(data.tasks, 'category')).sort();
+
+              for (var i=0; i<data.tasks.length; i++) {
+                if (data.tasks[i].time[1] === ":"){
+                  data.tasks[i].time = "0" + data.tasks[i].time;
+                };};
+
+              arrChekedDate = _.sortBy(data.tasks, ["time"]);
+
+              var objSel = document.getElementById("mySelectCategory"); 
+              for (var i = 2; i < arrUniqCategory.length+2; i++) {
+                objSel.options.length=i+1;
+                objSel.options[i].text = arrUniqCategory[i-2];
+                objSel.options[i].value = arrUniqCategory[i-2];
+              }  
+
+              var tableElem = document.getElementById('tableBody');
+              var elements = tableElem.getElementsByTagName('td');
+
+
+              for (var y = 0; y < arrChekedDate.length; y++) {
+                for (var i = 0; i < elements.length; i++) {
+                  if (elements[i].id.substring(2) == arrChekedDate[y].date){
+                    elements[i].innerHTML+='<p class="divInTd">'+arrChekedDate[y].time.substring(0,5)+'&nbsp'+arrChekedDate[y].name+'&nbsp'+'('+arrChekedDate[y].category+')'+'</p>';}
+                }}; 
+
+              return  arrChekedDate, arrUniqCategory, arrCategory;
+            });  
+          };
+
+          Load();
+
+          function StatusSelect(){
+            var arrCategory = [];
+            var chekedDate;
+            var arrChekedDate = [];
+            var arrUniqCategory = [];
+            var chekedCategory;
+            var chekedVIP;
+            var arrChekedCategory = [];
+
+            $.getJSON('https://raw.githubusercontent.com/SvitlanaKozina/calendar/master/data.json',
+                      function (data) {  
+              for (var i=0; i<data.tasks.length; i++) {
+                if (data.tasks[i].time[1] === ":"){
+                  data.tasks[i].time = "0" + data.tasks[i].time;
+                };};
+
+              arrChekedDate = _.sortBy(data.tasks, ["time"]);
+
+              var tableElem = document.getElementById('tableBody');
+              var elements = tableElem.getElementsByTagName('td');
+
+              var selectedCategory = $('#mySelectCategory').find('option:selected');
+              chekedCategory = selectedCategory.attr('value');
+              var selectedVip = $('#mySelectVip').find('option:selected');
+              chekedVip = selectedVip.attr('value');
+
+              if (chekedCategory == "Все"){
+                if(chekedVip == "Все"){
+                  $( ".divInTd" ).remove();     
+                  for (var y = 0; y < arrChekedDate.length; y++) {
+                    for (var i = 0; i < elements.length; i++) {
+                      if (elements[i].id.substring(2) == arrChekedDate[y].date){    
+                        elements[i].innerHTML+='<p class="divInTd">'+arrChekedDate[y].time.substring(0,5)+'&nbsp'+arrChekedDate[y].name+'&nbsp'+'('+arrChekedDate[y].category+')'+'</p>';}
+                    }};   
+                }};
+
+              if (chekedCategory == "Все" && chekedVip == "Выбрать VIP"){
+                $( ".divInTd" ).remove();   
+                for (var y = 0; y < arrChekedDate.length; y++) {
+                  for (var i = 0; i < elements.length; i++) {
+                    if (elements[i].id.substring(2) == arrChekedDate[y].date){    
+                      elements[i].innerHTML+='<p class="divInTd">'+arrChekedDate[y].time.substring(0,5)+'&nbsp'+arrChekedDate[y].name+'&nbsp'+'('+arrChekedDate[y].category+')'+'</p>';}
+                  }};   
+              };   
+
+              if (chekedCategory == "Выбрать категорию" && chekedVip == "Выбрать VIP"){
+                $( ".divInTd" ).remove();   
+                for (var y = 0; y < arrChekedDate.length; y++) {
+                  for (var i = 0; i < elements.length; i++) {
+                    if (elements[i].id.substring(2) == arrChekedDate[y].date){    
+                      elements[i].innerHTML+='<p class="divInTd">'+arrChekedDate[y].time.substring(0,5)+'&nbsp'+arrChekedDate[y].name+'&nbsp'+'('+arrChekedDate[y].category+')'+'</p>';}
+                  }};   
+              };  
+
+              if (chekedCategory == "Выбрать категорию" && chekedVip == "Все"){
+                $( ".divInTd" ).remove();   
+                for (var y = 0; y < arrChekedDate.length; y++) {
+                  for (var i = 0; i < elements.length; i++) {
+                    if (elements[i].id.substring(2) == arrChekedDate[y].date){    
+                      elements[i].innerHTML+='<p class="divInTd">'+arrChekedDate[y].time.substring(0,5)+'&nbsp'+arrChekedDate[y].name+'&nbsp'+'('+arrChekedDate[y].category+')'+'</p>';}
+                  }};   
+              };                
+
+              if (chekedCategory == "Все" && chekedVip !== "Выбрать VIP" && chekedVip !== "Все"){
+                $( ".divInTd" ).remove();  
+                arrChekedCategory = _.filter(arrChekedDate, {VIP: chekedVip});
+                for (var y = 0; y < arrChekedCategory.length; y++) {
+                  for (var i = 0; i < elements.length; i++) {    
+                    if (elements[i].id.substring(2) == arrChekedCategory[y].date){    
+                      elements[i].innerHTML+='<p class="divInTd">'+arrChekedCategory[y].time.substring(0,5)+'&nbsp'+arrChekedCategory[y].name+'&nbsp'+'('+arrChekedCategory[y].category+')'+'</p>';}
+                  }}; 
+              };
+
+              if (chekedCategory == "Выбрать категорию" && chekedVip !== "Выбрать VIP" && chekedVip !== "Все"){
+                $( ".divInTd" ).remove();  
+                arrChekedCategory = _.filter(arrChekedDate, {VIP: chekedVip});
+                for (var y = 0; y < arrChekedCategory.length; y++) {
+                  for (var i = 0; i < elements.length; i++) {    
+                    if (elements[i].id.substring(2) == arrChekedCategory[y].date){    
+                      elements[i].innerHTML+='<p class="divInTd">'+arrChekedCategory[y].time.substring(0,5)+'&nbsp'+arrChekedCategory[y].name+'&nbsp'+'('+arrChekedCategory[y].category+')'+'</p>';}
+                  }}; 
+              };
+
+              if (chekedCategory !== "Все" && chekedCategory !== "Выбрать категорию" && chekedVip !== "Выбрать VIP" && chekedVip !== "Все"){
+                $( ".divInTd" ).remove();  
+                arrChekedCategory = _.filter(_.filter(arrChekedDate, {category: chekedCategory}), {VIP: chekedVip});
+                for (var y = 0; y < arrChekedCategory.length; y++) {
+                  for (var i = 0; i < elements.length; i++) {    
+                    if (elements[i].id.substring(2) == arrChekedCategory[y].date){    
+                      elements[i].innerHTML+='<p class="divInTd">'+arrChekedCategory[y].time.substring(0,5)+'&nbsp'+arrChekedCategory[y].name+'&nbsp'+'('+arrChekedCategory[y].category+')'+'</p>';}
+                  }};
+              };
+
+              if (chekedVip == "Выбрать VIP"&& chekedCategory !== "Все" && chekedCategory !== "Выбрать категорию"){
+                $( ".divInTd" ).remove();  
+                arrChekedCategory = _.filter(arrChekedDate, {category: chekedCategory});
+                for (var y = 0; y < arrChekedCategory.length; y++) {
+                  for (var i = 0; i < elements.length; i++) {    
+                    if (elements[i].id.substring(2) == arrChekedCategory[y].date){    
+                      elements[i].innerHTML+='<p class="divInTd">'+arrChekedCategory[y].time.substring(0,5)+'&nbsp'+arrChekedCategory[y].name+'&nbsp'+'('+arrChekedCategory[y].category+')'+'</p>';}
+                  }};
+              };
+
+              if (chekedVip == "Все" && chekedCategory !== "Все" && chekedCategory !== "Выбрать категорию"){
+                $( ".divInTd" ).remove();  
+                arrChekedCategory = _.filter(arrChekedDate, {category: chekedCategory});
+                for (var y = 0; y < arrChekedCategory.length; y++) {
+                  for (var i = 0; i < elements.length; i++) {    
+                    if (elements[i].id.substring(2) == arrChekedCategory[y].date){    
+                      elements[i].innerHTML+='<p class="divInTd">'+arrChekedCategory[y].time.substring(0,5)+'&nbsp'+arrChekedCategory[y].name+'&nbsp'+'('+arrChekedCategory[y].category+')'+'</p>';}
+                  }};
+              };
+
+              return  arrChekedDate, arrUniqCategory, arrCategory;
+
+            });     
+          };
+        </script>
+
+    </body>
+ </html>
